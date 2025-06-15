@@ -207,6 +207,12 @@ func resourcePolicy() *schema.Resource {
 						Type: schema.TypeString,
 					},
 				},
+				"resource_tag_logical_operator": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      "AND",
+					ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
+				},
 				"resource_type_list": {
 					Type:     schema.TypeSet,
 					Optional: true,
@@ -375,6 +381,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, meta any) d
 	if err := d.Set(names.AttrResourceTags, flattenResourceTags(policy.ResourceTags)); err != nil {
 		diags = sdkdiag.AppendErrorf(diags, "setting resource_tags: %s", err)
 	}
+	d.Set("resource_tag_logical_operator", policy.ResourceTagLogicalOperator)
 	d.Set(names.AttrResourceType, policy.ResourceType)
 	d.Set("resource_type_list", policy.ResourceTypeList)
 	d.Set("resource_set_ids", policy.ResourceSetIds)
@@ -477,6 +484,7 @@ func expandPolicy(d *schema.ResourceData) *awstypes.Policy {
 		PolicyDescription:              aws.String(d.Get(names.AttrDescription).(string)),
 		PolicyName:                     aws.String(d.Get(names.AttrName).(string)),
 		RemediationEnabled:             d.Get("remediation_enabled").(bool),
+		ResourceTagLogicalOperator:     d.Get("resource_tag_logical_operator").(awstypes.ResourceTagLogicalOperator),
 		ResourceType:                   resourceType,
 		ResourceTypeList:               flex.ExpandStringValueSet(d.Get("resource_type_list").(*schema.Set)),
 		ResourceSetIds:                 flex.ExpandStringValueSet(d.Get("resource_set_ids").(*schema.Set)),
