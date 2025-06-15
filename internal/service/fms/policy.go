@@ -208,10 +208,10 @@ func resourcePolicy() *schema.Resource {
 					},
 				},
 				"resource_tag_logical_operator": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					Default:      "AND",
-					ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
+					Type:             schema.TypeString,
+					Optional:         true,
+					Default:          awstypes.ResourceTagLogicalOperatorAnd,
+					ValidateDiagFunc: enum.Validate[awstypes.ResourceTagLogicalOperator](),
 				},
 				"resource_type_list": {
 					Type:     schema.TypeSet,
