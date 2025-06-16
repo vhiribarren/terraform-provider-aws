@@ -281,19 +281,19 @@ func testAccPolicy_resourceTagLogicalOperator(t *testing.T) {
 		CheckDestroy:             testAccCheckPolicyDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPolicyConfig_resourceTagLogicalOperator_default(rName),
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_default(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "AND"),
 				),
 			},
 			{
-				Config: testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName),
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "AND"),
 				),
 			},
 			{
-				Config: testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName),
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "OR"),
 				),
@@ -749,9 +749,10 @@ resource "aws_wafregional_rule_group" "test" {
 `, rName, tagKey1, tagValue1, tagKey2, tagValue2))
 }
 
-func testAccPolicyConfig_resourceTagLogicalOperator_default(rName string) string {
+func testAccPolicyConfig_resourceTagLogicalOperator_default(rName, tagKey1, tagValue1 string) string {
 	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
 resource "aws_fms_policy" "test" {
+  exclude_resource_tags = false
   name                  = %[1]q
   remediation_enabled   = false
   resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
@@ -761,6 +762,10 @@ resource "aws_fms_policy" "test" {
     managed_service_data = "{\"type\": \"WAF\", \"ruleGroups\": [{\"id\":\"${aws_wafregional_rule_group.test.id}\", \"overrideAction\" : {\"type\": \"COUNT\"}}],\"defaultAction\": {\"type\": \"BLOCK\"}, \"overrideCustomerWebACLAssociation\": false}"
   }
 
+  resource_tags = {
+    %[2]q = %[3]q
+  }
+
   depends_on = [aws_fms_admin_account.test]
 }
 
@@ -768,12 +773,12 @@ resource "aws_wafregional_rule_group" "test" {
   metric_name = "MyTest"
   name        = %[1]q
 }
-`, rName))
+`, rName, tagKey1, tagValue1))
 }
-
-func testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName string) string {
+func testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName, tagKey1, tagValue1 string) string {
 	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
 resource "aws_fms_policy" "test" {
+  exclude_resource_tags = false
   name                  = %[1]q
   remediation_enabled   = false
   resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
@@ -785,6 +790,10 @@ resource "aws_fms_policy" "test" {
 
   resource_tag_logical_operator = "AND"
 
+  resource_tags = {
+    %[2]q = %[3]q
+  }
+
   depends_on = [aws_fms_admin_account.test]
 }
 
@@ -792,12 +801,13 @@ resource "aws_wafregional_rule_group" "test" {
   metric_name = "MyTest"
   name        = %[1]q
 }
-`, rName))
+`, rName, tagKey1, tagValue1))
 }
 
-func testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName string) string {
+func testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName, tagKey1, tagValue1 string) string {
 	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
 resource "aws_fms_policy" "test" {
+  exclude_resource_tags = false
   name                  = %[1]q
   remediation_enabled   = false
   resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
@@ -809,6 +819,10 @@ resource "aws_fms_policy" "test" {
 
   resource_tag_logical_operator = "OR"
 
+  resource_tags = {
+    %[2]q = %[3]q
+  }
+
   depends_on = [aws_fms_admin_account.test]
 }
 
@@ -816,7 +830,7 @@ resource "aws_wafregional_rule_group" "test" {
   metric_name = "MyTest"
   name        = %[1]q
 }
-`, rName))
+`, rName, tagKey1, tagValue1))
 }
 
 func testAccPolicyConfig_alb(rName string) string {
