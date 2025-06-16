@@ -281,11 +281,20 @@ func testAccPolicy_resourceTagLogicalOperator(t *testing.T) {
 		CheckDestroy:             testAccCheckPolicyDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPolicyConfig_resourceTagLogicalOperator(rName, acctest.CtKey1, acctest.CtValue1Updated, acctest.CtKey2, acctest.CtValue2),
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_default(rName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "resource_tags.%", "2"),
-					resource.TestCheckResourceAttr(resourceName, "resource_tags.key1", acctest.CtValue1Updated),
-					resource.TestCheckResourceAttr(resourceName, "resource_tags.key2", acctest.CtValue2),
+					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "AND"),
+				),
+			},
+			{
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "AND"),
+				),
+			},
+			{
+				Config: testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName),
+				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "resource_tag_logical_operator", "OR"),
 				),
 			},
@@ -740,10 +749,9 @@ resource "aws_wafregional_rule_group" "test" {
 `, rName, tagKey1, tagValue1, tagKey2, tagValue2))
 }
 
-func testAccPolicyConfig_resourceTagLogicalOperator(rName, tagKey1, tagValue1, tagKey2, tagValue2 string) string {
+func testAccPolicyConfig_resourceTagLogicalOperator_default(rName string) string {
 	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
 resource "aws_fms_policy" "test" {
-  exclude_resource_tags = false
   name                  = %[1]q
   remediation_enabled   = false
   resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
@@ -753,9 +761,50 @@ resource "aws_fms_policy" "test" {
     managed_service_data = "{\"type\": \"WAF\", \"ruleGroups\": [{\"id\":\"${aws_wafregional_rule_group.test.id}\", \"overrideAction\" : {\"type\": \"COUNT\"}}],\"defaultAction\": {\"type\": \"BLOCK\"}, \"overrideCustomerWebACLAssociation\": false}"
   }
 
-  resource_tags = {
-    %[2]q = %[3]q
-    %[4]q = %[5]q
+  depends_on = [aws_fms_admin_account.test]
+}
+
+resource "aws_wafregional_rule_group" "test" {
+  metric_name = "MyTest"
+  name        = %[1]q
+}
+`, rName))
+}
+
+func testAccPolicyConfig_resourceTagLogicalOperator_withAnd(rName string) string {
+	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
+resource "aws_fms_policy" "test" {
+  name                  = %[1]q
+  remediation_enabled   = false
+  resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
+
+  security_service_policy_data {
+    type                 = "WAF"
+    managed_service_data = "{\"type\": \"WAF\", \"ruleGroups\": [{\"id\":\"${aws_wafregional_rule_group.test.id}\", \"overrideAction\" : {\"type\": \"COUNT\"}}],\"defaultAction\": {\"type\": \"BLOCK\"}, \"overrideCustomerWebACLAssociation\": false}"
+  }
+
+  resource_tag_logical_operator = "AND"
+
+  depends_on = [aws_fms_admin_account.test]
+}
+
+resource "aws_wafregional_rule_group" "test" {
+  metric_name = "MyTest"
+  name        = %[1]q
+}
+`, rName))
+}
+
+func testAccPolicyConfig_resourceTagLogicalOperator_withOr(rName string) string {
+	return acctest.ConfigCompose(testAccAdminAccountConfig_basic, fmt.Sprintf(`
+resource "aws_fms_policy" "test" {
+  name                  = %[1]q
+  remediation_enabled   = false
+  resource_type_list    = ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
+
+  security_service_policy_data {
+    type                 = "WAF"
+    managed_service_data = "{\"type\": \"WAF\", \"ruleGroups\": [{\"id\":\"${aws_wafregional_rule_group.test.id}\", \"overrideAction\" : {\"type\": \"COUNT\"}}],\"defaultAction\": {\"type\": \"BLOCK\"}, \"overrideCustomerWebACLAssociation\": false}"
   }
 
   resource_tag_logical_operator = "OR"
@@ -767,7 +816,7 @@ resource "aws_wafregional_rule_group" "test" {
   metric_name = "MyTest"
   name        = %[1]q
 }
-`, rName, tagKey1, tagValue1, tagKey2, tagValue2))
+`, rName))
 }
 
 func testAccPolicyConfig_alb(rName string) string {
