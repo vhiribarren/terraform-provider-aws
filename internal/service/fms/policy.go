@@ -484,7 +484,7 @@ func expandPolicy(d *schema.ResourceData) *awstypes.Policy {
 		PolicyDescription:              aws.String(d.Get(names.AttrDescription).(string)),
 		PolicyName:                     aws.String(d.Get(names.AttrName).(string)),
 		RemediationEnabled:             d.Get("remediation_enabled").(bool),
-		ResourceTagLogicalOperator:     d.Get("resource_tag_logical_operator").(awstypes.ResourceTagLogicalOperator),
+		ResourceTagLogicalOperator:     awstypes.ResourceTagLogicalOperator(d.Get("resource_tag_logical_operator").(string)),
 		ResourceType:                   resourceType,
 		ResourceTypeList:               flex.ExpandStringValueSet(d.Get("resource_type_list").(*schema.Set)),
 		ResourceSetIds:                 flex.ExpandStringValueSet(d.Get("resource_set_ids").(*schema.Set)),
